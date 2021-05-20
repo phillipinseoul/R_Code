@@ -1,0 +1,184 @@
+lqs                    package:MASS                    R Documentation
+
+_R_e_s_i_s_t_a_n_t _R_e_g_r_e_s_s_i_o_n
+
+_D_e_s_c_r_i_p_t_i_o_n:
+
+     Fit a regression to the _good_ points in the dataset, thereby
+     achieving a regression estimator with a high breakdown point.
+     ‘lmsreg’ and ‘ltsreg’ are compatibility wrappers.
+
+_U_s_a_g_e:
+
+     lqs(x, ...)
+     
+     ## S3 method for class 'formula'
+     lqs(formula, data, ...,
+         method = c("lts", "lqs", "lms", "S", "model.frame"),
+         subset, na.action, model = TRUE,
+         x.ret = FALSE, y.ret = FALSE, contrasts = NULL)
+     
+     ## Default S3 method:
+     lqs(x, y, intercept = TRUE, method = c("lts", "lqs", "lms", "S"),
+         quantile, control = lqs.control(...), k0 = 1.548, seed, ...)
+     
+     lmsreg(...)
+     ltsreg(...)
+     
+_A_r_g_u_m_e_n_t_s:
+
+ formula: a formula of the form ‘y ~ x1 + x2 + ...’.
+
+    data: an optional data frame, list or environemnt from which
+          variables specified in ‘formula’ are preferentially to be
+          taken.
+
+  subset: an index vector specifying the cases to be used in fitting.
+          (NOTE: If given, this argument must be named exactly.)
+
+na.action: function to specify the action to be taken if ‘NA’s are
+          found.  The default action is for the procedure to fail.
+          Alternatives include ‘na.omit’ and ‘na.exclude’, which lead
+          to omission of cases with missing values on any required
+          variable.  (NOTE: If given, this argument must be named
+          exactly.)
+
+model, x.ret, y.ret: logical. If ‘TRUE’ the model frame, the model
+          matrix and the response are returned, respectively.
+
+contrasts: an optional list.  See the ‘contrasts.arg’ of
+          ‘model.matrix.default’.
+
+       x: a matrix or data frame containing the explanatory variables.
+
+       y: the response: a vector of length the number of rows of ‘x’.
+
+intercept: should the model include an intercept?
+
+  method: the method to be used. ‘model.frame’ returns the model frame:
+          for the others see the ‘Details’ section. Using ‘lmsreg’ or
+          ‘ltsreg’ forces ‘"lms"’ and ‘"lts"’ respectively.
+
+quantile: the quantile to be used: see ‘Details’. This is over-ridden
+          if ‘method = "lms"’.
+
+ control: additional control items: see ‘Details’.
+
+      k0: the cutoff / tuning constant used for chi() and psi()
+          functions when ‘method = "S"’, currently corresponding to
+          Tukey's ‘biweight’.
+
+    seed: the seed to be used for random sampling: see ‘.Random.seed’.
+          The current value of ‘.Random.seed’ will be preserved if it
+          is set..
+
+     ...: arguments to be passed to ‘lqs.default’ or ‘lqs.control’, see
+          ‘control’ above and ‘Details’.
+
+_D_e_t_a_i_l_s:
+
+     Suppose there are ‘n’ data points and ‘p’ regressors, including
+     any intercept.
+
+     The first three methods minimize some function of the sorted
+     squared residuals. For methods ‘"lqs"’ and ‘"lms"’ is the
+     ‘quantile’ squared residual, and for ‘"lts"’ it is the sum of the
+     ‘quantile’ smallest squared residuals. ‘"lqs"’ and ‘"lms"’ differ
+     in the defaults for ‘quantile’, which are ‘floor((n+p+1)/2)’ and
+     ‘floor((n+1)/2)’ respectively.  For ‘"lts"’ the default is
+     ‘floor(n/2) + floor((p+1)/2)’.
+
+     The ‘"S"’ estimation method solves for the scale ‘s’ such that the
+     average of a function chi of the residuals divided by ‘s’ is equal
+     to a given constant.
+
+     The ‘control’ argument is a list with components
+
+     ‘psamp’: the size of each sample. Defaults to ‘p’.
+
+     ‘nsamp’: the number of samples or ‘"best"’ (the default) or
+          ‘"exact"’ or ‘"sample"’.  If ‘"sample"’ the number chosen is
+          ‘min(5*p, 3000)’, taken from Rousseeuw and Hubert (1997).  If
+          ‘"best"’ exhaustive enumeration is done up to 5000 samples;
+          if ‘"exact"’ exhaustive enumeration will be attempted however
+          many samples are needed.
+
+     ‘adjust’: should the intercept be optimized for each sample?
+          Defaults to ‘TRUE’.
+
+_V_a_l_u_e:
+
+     An object of class ‘"lqs"’.  This is a list with components
+
+    crit: the value of the criterion for the best solution found, in
+          the case of ‘method == "S"’ before IWLS refinement.
+
+    sing: character. A message about the number of samples which
+          resulted in singular fits.
+
+coefficients: of the fitted linear model
+
+ bestone: the indices of those points fitted by the best sample found
+          (prior to adjustment of the intercept, if requested).
+
+fitted.values: the fitted values.
+
+residuals: the residuals.
+
+   scale: estimate(s) of the scale of the error. The first is based on
+          the fit criterion.  The second (not present for ‘method ==
+          "S"’) is based on the variance of those residuals whose
+          absolute value is less than 2.5 times the initial estimate.
+
+_N_o_t_e:
+
+     There seems no reason other than historical to use the ‘lms’ and
+     ‘lqs’ options.  LMS estimation is of low efficiency (converging at
+     rate n^{-1/3}) whereas LTS has the same asymptotic efficiency as
+     an M estimator with trimming at the quartiles (Marazzi, 1993,
+     p.201).  LQS and LTS have the same maximal breakdown value of
+     ‘(floor((n-p)/2) + 1)/n’ attained if ‘floor((n+p)/2) <= quantile
+     <= floor((n+p+1)/2)’.  The only drawback mentioned of LTS is
+     greater computation, as a sort was thought to be required
+     (Marazzi, 1993, p.201) but this is not true as a partial sort can
+     be used (and is used in this implementation).
+
+     Adjusting the intercept for each trial fit does need the residuals
+     to be sorted, and may be significant extra computation if ‘n’ is
+     large and ‘p’ small.
+
+     Opinions differ over the choice of ‘psamp’.  Rousseeuw and Hubert
+     (1997) only consider p; Marazzi (1993) recommends p+1 and suggests
+     that more samples are better than adjustment for a given
+     computational limit.
+
+     The computations are exact for a model with just an intercept and
+     adjustment, and for LQS for a model with an intercept plus one
+     regressor and exhaustive search with adjustment. For all other
+     cases the minimization is only known to be approximate.
+
+_R_e_f_e_r_e_n_c_e_s:
+
+     P. J. Rousseeuw and A. M. Leroy (1987) _Robust Regression and
+     Outlier Detection._ Wiley.
+
+     A. Marazzi (1993) _Algorithms, Routines and S Functions for Robust
+     Statistics._ Wadsworth and Brooks/Cole.
+
+     P. Rousseeuw and M. Hubert (1997) Recent developments in PROGRESS.
+     In _L1-Statistical Procedures and Related Topics_, ed Y. Dodge,
+     IMS Lecture Notes volume *31*, pp. 201-214.
+
+_S_e_e _A_l_s_o:
+
+     ‘predict.lqs’
+
+_E_x_a_m_p_l_e_s:
+
+     ## IGNORE_RDIFF_BEGIN
+     set.seed(123) # make reproducible
+     lqs(stack.loss ~ ., data = stackloss)
+     lqs(stack.loss ~ ., data = stackloss, method = "S", nsamp = "exact")
+     ## IGNORE_RDIFF_END
+     
+
